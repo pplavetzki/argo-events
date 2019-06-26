@@ -43,7 +43,8 @@ type Webhook struct {
 	ServerCertPath string `json:"serverCertPath,omitempty" protobuf:"bytes,4,opt,name=serverCertPath"`
 	// ServerKeyPath refers the file that contains private key
 	ServerKeyPath string `json:"serverKeyPath,omitempty" protobuf:"bytes,5,opt,name=serverKeyPath"`
-
+	// AuthURL is the url for the middleware to authenticate the Bearer JWT
+	AuthURL string `json:"authURL" protobu:"bytes,4,name=authURL"`
 	// srv holds reference to http server
 	srv *http.Server
 	mux *http.ServeMux
@@ -197,11 +198,22 @@ func activateRoute(routeManager RouteManager, helper *WebhookHelper) {
 			Active: true,
 			DataCh: make(chan []byte),
 		}
-		r.Webhook.mux.HandleFunc(r.Webhook.Endpoint, routeManager.RouteHandler)
+		if r.Webhook.AuthURL != "" {
+			jwt := NewJWTMw(Options{AuthEndpoint: r.Webhook.AuthURL})
+			r.Webhook.mux.Handle(r.Webhook.Endpoint, jwt.Handler(makeHandler(routeManager.RouteHandler)))
+		} else {
+			r.Webhook.mux.HandleFunc(r.Webhook.Endpoint, routeManager.RouteHandler)
+		}
 	}
 	helper.ActiveEndpoints[r.Webhook.Endpoint].Active = true
 
 	log.Info("route handler added")
+}
+
+func makeHandler(fn func (http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fn(w, r)
+	}
 }
 
 func processChannels(routeManager RouteManager, helper *WebhookHelper, eventStream gateways.Eventing_StartEventSourceServer) error {
