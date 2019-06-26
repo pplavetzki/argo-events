@@ -44,7 +44,7 @@ type Webhook struct {
 	// ServerKeyPath refers the file that contains private key
 	ServerKeyPath string `json:"serverKeyPath,omitempty" protobuf:"bytes,5,opt,name=serverKeyPath"`
 	// AuthURL is the url for the middleware to authenticate the Bearer JWT
-	AuthURL string `json:"authURL" protobu:"bytes,4,name=authURL"`
+	AuthURL string `json:"authURL" protobuf:"bytes,4,name=authURL"`
 	// srv holds reference to http server
 	srv *http.Server
 	mux *http.ServeMux
