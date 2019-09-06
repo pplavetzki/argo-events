@@ -1,4 +1,4 @@
-# Argo Events - The Event-Based Dependency Manager for Kubernetes
+# Argo Events - Hello! The Event-Based Dependency Manager for Kubernetes
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/argoproj/argo-events)](https://goreportcard.com/report/github.com/argoproj/argo-events)
 [![slack](https://img.shields.io/badge/slack-argoproj-brightgreen.svg?logo=slack)](https://argoproj.github.io/community/join-slack)
