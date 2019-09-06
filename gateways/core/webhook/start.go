@@ -73,6 +73,16 @@ func (rc *RouteConfig) RouteHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
+	if r.Webhook.AuthURL != "" {
+		jwt := gwcommon.NewJWTMw(gwcommon.Options{AuthEndpoint: r.Webhook.AuthURL})
+		err := jwt.CheckJWT(writer, request)
+		if err != nil {
+			log.Info("invalid token or auth url")
+			response = fmt.Sprintf("the Auth Url %s was invalid or the token proved was invalid %v", r.Webhook.AuthURL, err)
+			common.SendErrorResponse(writer, response)
+		}
+	}
+
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		log.WithError(err).Error("failed to parse request body")
