@@ -72,3 +72,51 @@ func TestRouteActiveHandler(t *testing.T) {
 		})
 	})
 }
+
+func TestRouteActiveJWTHandler(t *testing.T) {
+	convey.Convey("Given a route configuration", t, func() {
+		rc := &RouteConfig{
+			Route: gwcommon.GetFakeRoute(),
+		}
+		r := rc.Route
+		r.Webhook.Method = http.MethodGet
+		helper.ActiveEndpoints[r.Webhook.Endpoint] = &gwcommon.Endpoint{
+			DataCh: make(chan []byte),
+		}
+
+		writer := &gwcommon.FakeHttpWriter{}
+
+		convey.Convey("Inactive route should return error", func() {
+			rc.RouteHandler(writer, &http.Request{
+				Body: ioutil.NopCloser(bytes.NewReader([]byte("hello"))),
+			})
+			convey.So(writer.HeaderStatus, convey.ShouldEqual, http.StatusBadRequest)
+		})
+
+		helper.ActiveEndpoints[r.Webhook.Endpoint].Active = true
+
+		convey.Convey("Active route with correct method should return success", func() {
+			dataCh := make(chan []byte)
+			go func() {
+				resp := <-helper.ActiveEndpoints[r.Webhook.Endpoint].DataCh
+				dataCh <- resp
+			}()
+
+			rc.RouteHandler(writer, &http.Request{
+				Body:   ioutil.NopCloser(bytes.NewReader([]byte("fake notification"))),
+				Method: http.MethodGet,
+			})
+			convey.So(writer.HeaderStatus, convey.ShouldEqual, http.StatusOK)
+			data := <-dataCh
+			convey.So(string(data), convey.ShouldEqual, "fake notification")
+		})
+
+		convey.Convey("Active route with incorrect method should return failure", func() {
+			rc.RouteHandler(writer, &http.Request{
+				Body:   ioutil.NopCloser(bytes.NewReader([]byte("fake notification"))),
+				Method: http.MethodHead,
+			})
+			convey.So(writer.HeaderStatus, convey.ShouldEqual, http.StatusBadRequest)
+		})
+	})
+}

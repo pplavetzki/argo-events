@@ -12,6 +12,7 @@ var Hook = &Webhook{
 	Endpoint: "/fake",
 	Port:     "12000",
 	URL:      "test-url",
+	AuthURL: "http://localhost:9191/api/authorize/verify-token",
 }
 
 type FakeHttpWriter struct {
